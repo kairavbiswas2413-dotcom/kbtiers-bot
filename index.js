@@ -2,9 +2,9 @@ const { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, REST, Rout
 
 const TOKEN = process.env.TOKEN;
 
-// 🔴 PASTE HERE
-const CLIENT_ID = "PASTE_HERE";
-const GUILD_ID = "PASTE_SERVER_ID";
+// ✅ YOUR IDs (already filled)
+const CLIENT_ID = "1500092849176318023";
+const GUILD_ID = "1499091184021409902";
 
 const client = new Client({
   intents: [GatewayIntentBits.Guilds]
@@ -16,12 +16,13 @@ const commands = [
     .setDescription("Check player profile")
     .addStringOption(option =>
       option.setName("player")
+        .setDescription("Player name")
         .setRequired(true)
     ),
 
   new SlashCommandBuilder()
     .setName("tier")
-    .setDescription("Add tier")
+    .setDescription("Add tier result")
     .addSubcommand(sub =>
       sub.setName("add")
         .addStringOption(o => o.setName("player").setRequired(true))
@@ -39,6 +40,7 @@ const rest = new REST({ version: "10" }).setToken(TOKEN);
     Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
     { body: commands }
   );
+  console.log("Commands registered ✅");
 })();
 
 client.on("interactionCreate", async interaction => {
@@ -53,16 +55,32 @@ client.on("interactionCreate", async interaction => {
 
     const embed = new EmbedBuilder()
       .setTitle(`${player} Tier Results 🏆`)
+      .setColor("#FFD700")
       .addFields(
-        { name: "Username", value: player },
-        { name: "Region", value: region },
-        { name: "Gamemode", value: gamemode },
-        { name: "Tester", value: tester },
-        { name: "Tier Earned", value: tier }
+        { name: "**Username**", value: player },
+        { name: "**Region**", value: region },
+        { name: "**Gamemode**", value: gamemode },
+        { name: "**Tester**", value: tester },
+        { name: "**Tier Earned**", value: tier }
       );
 
     await interaction.reply({ embeds: [embed] });
   }
+
+  if (interaction.commandName === "profile") {
+    const player = interaction.options.getString("player");
+
+    const embed = new EmbedBuilder()
+      .setTitle(`${player} Profile 📊`)
+      .setDescription("Profile system coming soon...")
+      .setColor("Blue");
+
+    await interaction.reply({ embeds: [embed] });
+  }
+});
+
+client.once("ready", () => {
+  console.log("Bot Ready 🚀");
 });
 
 client.login(TOKEN);
