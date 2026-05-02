@@ -2,10 +2,7 @@ const { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, REST, Rout
 
 const TOKEN = process.env.TOKEN;
 
-// 🔴 PUT YOUR APPLICATION ID HERE
-const CLIENT_ID = "PASTE_YOUR_APPLICATION_ID_HERE";
-
-// ✅ YOUR SERVER ID (already done)
+const CLIENT_ID = "1500092849176318023";
 const GUILD_ID = "1499091184021409902";
 
 const client = new Client({
@@ -18,7 +15,7 @@ const commands = [
     .setDescription("Check player profile")
     .addStringOption(option =>
       option.setName("player")
-        .setDescription("Player name")
+        .setDescription("Enter player name") // ✅ FIXED
         .setRequired(true)
     ),
 
@@ -27,11 +24,12 @@ const commands = [
     .setDescription("Add tier result")
     .addSubcommand(sub =>
       sub.setName("add")
-        .addStringOption(o => o.setName("player").setRequired(true))
-        .addStringOption(o => o.setName("region").setRequired(true))
-        .addStringOption(o => o.setName("gamemode").setRequired(true))
-        .addStringOption(o => o.setName("tier").setRequired(true))
-        .addStringOption(o => o.setName("tester").setRequired(true))
+        .setDescription("Add a tier result") // ✅ FIXED
+        .addStringOption(o => o.setName("player").setDescription("Player Name").setRequired(true))
+        .addStringOption(o => o.setName("region").setDescription("Region").setRequired(true))
+        .addStringOption(o => o.setName("gamemode").setDescription("Gamemode").setRequired(true))
+        .addStringOption(o => o.setName("tier").setDescription("Tier Earned").setRequired(true))
+        .addStringOption(o => o.setName("tester").setDescription("Tester Name").setRequired(true))
     )
 ];
 
@@ -57,12 +55,13 @@ client.on("interactionCreate", async interaction => {
 
     const embed = new EmbedBuilder()
       .setTitle(`${player} Tier Results 🏆`)
+      .setColor("#FFD700")
       .addFields(
-        { name: "Username", value: player },
-        { name: "Region", value: region },
-        { name: "Gamemode", value: gamemode },
-        { name: "Tester", value: tester },
-        { name: "Tier Earned", value: tier }
+        { name: "**Username**", value: player },
+        { name: "**Region**", value: region },
+        { name: "**Gamemode**", value: gamemode },
+        { name: "**Tester**", value: tester },
+        { name: "**Tier Earned**", value: tier }
       );
 
     await interaction.reply({ embeds: [embed] });
@@ -70,7 +69,13 @@ client.on("interactionCreate", async interaction => {
 
   if (interaction.commandName === "profile") {
     const player = interaction.options.getString("player");
-    await interaction.reply(`Profile of ${player} (coming soon)`);
+
+    const embed = new EmbedBuilder()
+      .setTitle(`${player} Profile 📊`)
+      .setDescription("Profile system coming soon...")
+      .setColor("Blue");
+
+    await interaction.reply({ embeds: [embed] });
   }
 });
 
