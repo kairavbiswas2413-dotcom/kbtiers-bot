@@ -2,7 +2,6 @@ const { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, REST, Rout
 
 const TOKEN = process.env.TOKEN;
 
-// ✅ YOUR IDs (already filled)
 const CLIENT_ID = "1500092849176318023";
 const GUILD_ID = "1499091184021409902";
 
@@ -16,7 +15,7 @@ const commands = [
     .setDescription("Check player profile")
     .addStringOption(option =>
       option.setName("player")
-        .setDescription("Player name")
+        .setDescription("Enter player name") // ✅ FIXED
         .setRequired(true)
     ),
 
@@ -25,11 +24,12 @@ const commands = [
     .setDescription("Add tier result")
     .addSubcommand(sub =>
       sub.setName("add")
-        .addStringOption(o => o.setName("player").setRequired(true))
-        .addStringOption(o => o.setName("region").setRequired(true))
-        .addStringOption(o => o.setName("gamemode").setRequired(true))
-        .addStringOption(o => o.setName("tier").setRequired(true))
-        .addStringOption(o => o.setName("tester").setRequired(true))
+        .setDescription("Add a tier result") // ✅ FIXED
+        .addStringOption(o => o.setName("player").setDescription("Player Name").setRequired(true))
+        .addStringOption(o => o.setName("region").setDescription("Region").setRequired(true))
+        .addStringOption(o => o.setName("gamemode").setDescription("Gamemode").setRequired(true))
+        .addStringOption(o => o.setName("tier").setDescription("Tier Earned").setRequired(true))
+        .addStringOption(o => o.setName("tester").setDescription("Tester Name").setRequired(true))
     )
 ];
 
