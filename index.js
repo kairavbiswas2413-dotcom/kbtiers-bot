@@ -9,13 +9,19 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
+// 🧠 SIMPLE DATABASE (RAM)
+let playerData = {};
+
+// 🎮 ALL GAMEMODES
+const gamemodes = ["Vanilla", "UHC", "Diapot", "Nethpot", "SMP", "Sword", "Axe", "Mace"];
+
 const commands = [
   new SlashCommandBuilder()
     .setName("profile")
     .setDescription("Check player profile")
     .addStringOption(option =>
       option.setName("player")
-        .setDescription("Enter player name") // ✅ FIXED
+        .setDescription("Enter player name")
         .setRequired(true)
     ),
 
@@ -24,7 +30,7 @@ const commands = [
     .setDescription("Add tier result")
     .addSubcommand(sub =>
       sub.setName("add")
-        .setDescription("Add a tier result") // ✅ FIXED
+        .setDescription("Add a tier result")
         .addStringOption(o => o.setName("player").setDescription("Player Name").setRequired(true))
         .addStringOption(o => o.setName("region").setDescription("Region").setRequired(true))
         .addStringOption(o => o.setName("gamemode").setDescription("Gamemode").setRequired(true))
@@ -46,12 +52,21 @@ const rest = new REST({ version: "10" }).setToken(TOKEN);
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
+  // 🟢 ADD TIER
   if (interaction.commandName === "tier") {
     const player = interaction.options.getString("player");
     const region = interaction.options.getString("region");
     const gamemode = interaction.options.getString("gamemode");
     const tier = interaction.options.getString("tier");
     const tester = interaction.options.getString("tester");
+
+    // create player if not exists
+    if (!playerData[player]) {
+      playerData[player] = { region: region, tiers: {} };
+    }
+
+    // save tier
+    playerData[player].tiers[gamemode] = tier;
 
     const embed = new EmbedBuilder()
       .setTitle(`${player} Tier Results 🏆`)
@@ -67,13 +82,21 @@ client.on("interactionCreate", async interaction => {
     await interaction.reply({ embeds: [embed] });
   }
 
+  // 🔵 PROFILE
   if (interaction.commandName === "profile") {
     const player = interaction.options.getString("player");
 
+    let desc = "";
+
+    for (let mode of gamemodes) {
+      let tier = playerData[player]?.tiers[mode] || " ";
+      desc += `**${mode}** : ${tier}\n`;
+    }
+
     const embed = new EmbedBuilder()
-      .setTitle(`${player} Profile 📊`)
-      .setDescription("Profile system coming soon...")
-      .setColor("Blue");
+      .setTitle(`${player} Profile`)
+      .setColor("Blue")
+      .setDescription(desc);
 
     await interaction.reply({ embeds: [embed] });
   }
