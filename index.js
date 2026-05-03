@@ -1,8 +1,10 @@
 const { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, REST, Routes } = require("discord.js");
 const express = require("express");
+const cors = require("cors");
 const fs = require("fs");
 
 const app = express();
+app.use(cors());
 
 const TOKEN = process.env.TOKEN;
 
@@ -13,7 +15,7 @@ const client = new Client({
   intents: [GatewayIntentBits.Guilds]
 });
 
-// 🧠 LOAD DATA (PERMANENT)
+// 🧠 LOAD DATA
 let playerData = {};
 if (fs.existsSync("data.json")) {
   playerData = JSON.parse(fs.readFileSync("data.json"));
@@ -22,7 +24,7 @@ if (fs.existsSync("data.json")) {
 // 🎮 GAMEMODES
 const gamemodes = ["Vanilla", "UHC", "Diapot", "Nethpot", "SMP", "Sword", "Axe", "Mace"];
 
-// 🌐 WEBSITE API
+// 🌐 API FOR WEBSITE
 app.get("/players", (req, res) => {
   res.json(playerData);
 });
@@ -75,7 +77,7 @@ const rest = new REST({ version: "10" }).setToken(TOKEN);
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  // 🟢 TIER ADD (UNCHANGED EMBED)
+  // 🟢 TIER ADD
   if (interaction.commandName === "tier") {
     const player = interaction.options.getString("player");
     const region = interaction.options.getString("region");
@@ -89,7 +91,7 @@ client.on("interactionCreate", async interaction => {
 
     playerData[player].tiers[gamemode] = tier;
 
-    // 💾 SAVE FILE
+    // 💾 SAVE DATA
     fs.writeFileSync("data.json", JSON.stringify(playerData, null, 2));
 
     const embed = new EmbedBuilder()
@@ -106,7 +108,7 @@ client.on("interactionCreate", async interaction => {
     await interaction.reply({ embeds: [embed] });
   }
 
-  // 🔵 PROFILE (UNCHANGED STYLE)
+  // 🔵 PROFILE
   if (interaction.commandName === "profile") {
     const player = interaction.options.getString("player");
 
