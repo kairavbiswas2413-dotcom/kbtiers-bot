@@ -1,7 +1,6 @@
 const { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, REST, Routes } = require("discord.js");
 const express = require("express");
 const cors = require("cors");
-const fs = require("fs");
 
 const app = express();
 app.use(cors());
