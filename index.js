@@ -1,6 +1,15 @@
-const { Client, GatewayIntentBits, EmbedBuilder, SlashCommandBuilder, REST, Routes } = require("discord.js");
+const {
+  Client,
+  GatewayIntentBits,
+  EmbedBuilder,
+  SlashCommandBuilder,
+  REST,
+  Routes
+} = require("discord.js");
+
 const express = require("express");
 const cors = require("cors");
+const fs = require("fs");
 
 const app = express();
 app.use(cors());
@@ -16,30 +25,48 @@ const client = new Client({
 
 // 🧠 LOAD DATA
 let playerData = {};
+
 if (fs.existsSync("data.json")) {
-  playerData = JSON.parse(fs.readFileSync("data.json"));
+  playerData = JSON.parse(fs.readFileSync("data.json", "utf8"));
 }
 
 // 🎮 GAMEMODES
-const gamemodes = ["Vanilla", "UHC", "Diapot", "Nethpot", "SMP", "Sword", "Axe", "Mace"];
+const gamemodes = [
+  "Vanilla",
+  "UHC",
+  "Diapot",
+  "Nethpot",
+  "SMP",
+  "Sword",
+  "Axe",
+  "Mace"
+];
 
 // 🌐 API FOR WEBSITE
 app.get("/players", (req, res) => {
   res.json(playerData);
 });
 
-// 🚀 START API
-app.listen(3000, () => {
-  console.log("API running 🚀");
+// ❤️ KEEP SERVER ALIVE
+app.get("/", (req, res) => {
+  res.send("Bot API Running 🚀");
 });
 
-// 📌 COMMANDS (UNCHANGED)
+// 🚀 START API
+const PORT = process.env.PORT || 3000;
+
+app.listen(PORT, () => {
+  console.log(`API running on port ${PORT} 🚀`);
+});
+
+// 📌 COMMANDS
 const commands = [
   new SlashCommandBuilder()
     .setName("profile")
     .setDescription("Check player profile")
     .addStringOption(option =>
-      option.setName("player")
+      option
+        .setName("player")
         .setDescription("Enter player name")
         .setRequired(true)
     ),
@@ -48,28 +75,47 @@ const commands = [
     .setName("tier")
     .setDescription("Add tier result")
     .addSubcommand(sub =>
-      sub.setName("add")
+      sub
+        .setName("add")
         .setDescription("Add a tier result")
-        .addStringOption(o => o.setName("player").setDescription("Player Name").setRequired(true))
-        .addStringOption(o => o.setName("region").setDescription("Region").setRequired(true))
-        .addStringOption(o => o.setName("gamemode").setDescription("Gamemode").setRequired(true))
-        .addStringOption(o => o.setName("tier").setDescription("Tier Earned").setRequired(true))
-        .addStringOption(o => o.setName("tester").setDescription("Tester Name").setRequired(true))
+        .addStringOption(o =>
+          o.setName("player").setDescription("Player Name").setRequired(true)
+        )
+        .addStringOption(o =>
+          o.setName("region").setDescription("Region").setRequired(true)
+        )
+        .addStringOption(o =>
+          o.setName("gamemode").setDescription("Gamemode").setRequired(true)
+        )
+        .addStringOption(o =>
+          o.setName("tier").setDescription("Tier Earned").setRequired(true)
+        )
+        .addStringOption(o =>
+          o.setName("tester").setDescription("Tester Name").setRequired(true)
+        )
     ),
 
   new SlashCommandBuilder()
     .setName("top")
     .setDescription("Leaderboard")
-];
+].map(command => command.toJSON());
 
 const rest = new REST({ version: "10" }).setToken(TOKEN);
 
+// 📌 REGISTER COMMANDS
 (async () => {
-  await rest.put(
-    Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
-    { body: commands }
-  );
-  console.log("Commands registered ✅");
+  try {
+    console.log("Registering commands...");
+
+    await rest.put(
+      Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
+      { body: commands }
+    );
+
+    console.log("Commands registered ✅");
+  } catch (err) {
+    console.error(err);
+  }
 })();
 
 // 🎯 EVENTS
@@ -77,7 +123,10 @@ client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
   // 🟢 TIER ADD
-  if (interaction.commandName === "tier") {
+  if (
+    interaction.commandName === "tier" &&
+    interaction.options.getSubcommand() === "add"
+  ) {
     const player = interaction.options.getString("player");
     const region = interaction.options.getString("region");
     const gamemode = interaction.options.getString("gamemode");
@@ -85,50 +134,72 @@ client.on("interactionCreate", async interaction => {
     const tester = interaction.options.getString("tester");
 
     if (!playerData[player]) {
-      playerData[player] = { region: region, tiers: {} };
+      playerData[player] = {
+        region: region,
+        tiers: {}
+      };
     }
 
+    playerData[player].region = region;
     playerData[player].tiers[gamemode] = tier;
 
     // 💾 SAVE DATA
-    fs.writeFileSync("data.json", JSON.stringify(playerData, null, 2));
+    fs.writeFileSync(
+      "data.json",
+      JSON.stringify(playerData, null, 2)
+    );
 
     const embed = new EmbedBuilder()
       .setTitle(`${player} Tier Results 🏆`)
       .setColor("#FFD700")
       .addFields(
-        { name: "Username", value: player },
-        { name: "Region", value: region },
-        { name: "Gamemode", value: gamemode },
-        { name: "Tester", value: tester },
-        { name: "Tier Earned", value: tier }
+        { name: "Username", value: player, inline: true },
+        { name: "Region", value: region, inline: true },
+        { name: "Gamemode", value: gamemode, inline: true },
+        { name: "Tester", value: tester, inline: true },
+        { name: "Tier Earned", value: tier, inline: true }
       );
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply({
+      embeds: [embed]
+    });
   }
 
   // 🔵 PROFILE
   if (interaction.commandName === "profile") {
     const player = interaction.options.getString("player");
 
+    if (!playerData[player]) {
+      return interaction.reply({
+        content: "Player not found!",
+        ephemeral: true
+      });
+    }
+
     let desc = "";
 
-    for (let mode of gamemodes) {
-      let t = playerData[player]?.tiers[mode] || " ";
-      desc += `${mode}: ${t}\n`;
+    for (const mode of gamemodes) {
+      const t = playerData[player]?.tiers[mode] || "EMPTY";
+      desc += `**${mode}:** ${t}\n`;
     }
 
     const embed = new EmbedBuilder()
       .setTitle(`${player} Profile`)
       .setColor("Blue")
+      .addFields({
+        name: "Region",
+        value: playerData[player].region || "Unknown"
+      })
       .setDescription(desc);
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply({
+      embeds: [embed]
+    });
   }
 
   // 🟡 TOP
   if (interaction.commandName === "top") {
-    let players = Object.keys(playerData);
+    const players = Object.keys(playerData);
 
     if (players.length === 0) {
       return interaction.reply("No data yet!");
@@ -141,16 +212,20 @@ client.on("interactionCreate", async interaction => {
     });
 
     const embed = new EmbedBuilder()
-      .setTitle("Leaderboard")
+      .setTitle("Leaderboard 🏆")
       .setColor("#FFD700")
       .setDescription(desc);
 
-    await interaction.reply({ embeds: [embed] });
+    await interaction.reply({
+      embeds: [embed]
+    });
   }
 });
 
+// 🤖 READY
 client.once("ready", () => {
-  console.log("Bot Ready 🚀");
+  console.log(`${client.user.tag} is online 🚀`);
 });
 
+// LOGIN
 client.login(TOKEN);
