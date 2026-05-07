@@ -12,11 +12,15 @@ const cors = require("cors");
 const fs = require("fs");
 
 const app = express();
+
 app.use(cors());
 
 const TOKEN = process.env.TOKEN;
 
-const CLIENT_ID = "1500092849176318023";
+// ✅ FIXED CLIENT ID
+const CLIENT_ID = "1501851418817069126";
+
+// ✅ YOUR SERVER ID
 const GUILD_ID = "1499091184021409902";
 
 const client = new Client({
@@ -27,7 +31,9 @@ const client = new Client({
 let playerData = {};
 
 if (fs.existsSync("data.json")) {
-  playerData = JSON.parse(fs.readFileSync("data.json", "utf8"));
+  playerData = JSON.parse(
+    fs.readFileSync("data.json", "utf8")
+  );
 }
 
 // 🎮 GAMEMODES
@@ -42,24 +48,23 @@ const gamemodes = [
   "Mace"
 ];
 
-// 🌐 API FOR WEBSITE
+// 🌐 API
+app.get("/", (req, res) => {
+  res.send("KB Tiers Bot API Running 🚀");
+});
+
 app.get("/players", (req, res) => {
   res.json(playerData);
 });
 
-// ❤️ KEEP SERVER ALIVE
-app.get("/", (req, res) => {
-  res.send("Bot API Running 🚀");
-});
-
-// 🚀 START API
+// 🚀 START SERVER
 const PORT = process.env.PORT || 3000;
 
 app.listen(PORT, () => {
-  console.log(`API running on port ${PORT} 🚀`);
+  console.log(`API running on port ${PORT}`);
 });
 
-// 📌 COMMANDS
+// 📌 SLASH COMMANDS
 const commands = [
   new SlashCommandBuilder()
     .setName("profile")
@@ -67,48 +72,66 @@ const commands = [
     .addStringOption(option =>
       option
         .setName("player")
-        .setDescription("Enter player name")
+        .setDescription("Player name")
         .setRequired(true)
     ),
 
   new SlashCommandBuilder()
     .setName("tier")
-    .setDescription("Add tier result")
+    .setDescription("Tier system")
     .addSubcommand(sub =>
       sub
         .setName("add")
-        .setDescription("Add a tier result")
+        .setDescription("Add tier")
         .addStringOption(o =>
-          o.setName("player").setDescription("Player Name").setRequired(true)
+          o
+            .setName("player")
+            .setDescription("Player")
+            .setRequired(true)
         )
         .addStringOption(o =>
-          o.setName("region").setDescription("Region").setRequired(true)
+          o
+            .setName("region")
+            .setDescription("Region")
+            .setRequired(true)
         )
         .addStringOption(o =>
-          o.setName("gamemode").setDescription("Gamemode").setRequired(true)
+          o
+            .setName("gamemode")
+            .setDescription("Gamemode")
+            .setRequired(true)
         )
         .addStringOption(o =>
-          o.setName("tier").setDescription("Tier Earned").setRequired(true)
+          o
+            .setName("tier")
+            .setDescription("Tier")
+            .setRequired(true)
         )
         .addStringOption(o =>
-          o.setName("tester").setDescription("Tester Name").setRequired(true)
+          o
+            .setName("tester")
+            .setDescription("Tester")
+            .setRequired(true)
         )
     ),
 
   new SlashCommandBuilder()
     .setName("top")
     .setDescription("Leaderboard")
-].map(command => command.toJSON());
-
-const rest = new REST({ version: "10" }).setToken(TOKEN);
+].map(cmd => cmd.toJSON());
 
 // 📌 REGISTER COMMANDS
+const rest = new REST({ version: "10" }).setToken(TOKEN);
+
 (async () => {
   try {
     console.log("Registering commands...");
 
     await rest.put(
-      Routes.applicationGuildCommands(CLIENT_ID, GUILD_ID),
+      Routes.applicationGuildCommands(
+        CLIENT_ID,
+        GUILD_ID
+      ),
       { body: commands }
     );
 
@@ -122,20 +145,29 @@ const rest = new REST({ version: "10" }).setToken(TOKEN);
 client.on("interactionCreate", async interaction => {
   if (!interaction.isChatInputCommand()) return;
 
-  // 🟢 TIER ADD
+  // 🟢 ADD TIER
   if (
     interaction.commandName === "tier" &&
     interaction.options.getSubcommand() === "add"
   ) {
-    const player = interaction.options.getString("player");
-    const region = interaction.options.getString("region");
-    const gamemode = interaction.options.getString("gamemode");
-    const tier = interaction.options.getString("tier");
-    const tester = interaction.options.getString("tester");
+    const player =
+      interaction.options.getString("player");
+
+    const region =
+      interaction.options.getString("region");
+
+    const gamemode =
+      interaction.options.getString("gamemode");
+
+    const tier =
+      interaction.options.getString("tier");
+
+    const tester =
+      interaction.options.getString("tester");
 
     if (!playerData[player]) {
       playerData[player] = {
-        region: region,
+        region,
         tiers: {}
       };
     }
@@ -143,7 +175,7 @@ client.on("interactionCreate", async interaction => {
     playerData[player].region = region;
     playerData[player].tiers[gamemode] = tier;
 
-    // 💾 SAVE DATA
+    // 💾 SAVE
     fs.writeFileSync(
       "data.json",
       JSON.stringify(playerData, null, 2)
@@ -153,11 +185,31 @@ client.on("interactionCreate", async interaction => {
       .setTitle(`${player} Tier Results 🏆`)
       .setColor("#FFD700")
       .addFields(
-        { name: "Username", value: player, inline: true },
-        { name: "Region", value: region, inline: true },
-        { name: "Gamemode", value: gamemode, inline: true },
-        { name: "Tester", value: tester, inline: true },
-        { name: "Tier Earned", value: tier, inline: true }
+        {
+          name: "Username",
+          value: player,
+          inline: true
+        },
+        {
+          name: "Region",
+          value: region,
+          inline: true
+        },
+        {
+          name: "Gamemode",
+          value: gamemode,
+          inline: true
+        },
+        {
+          name: "Tier",
+          value: tier,
+          inline: true
+        },
+        {
+          name: "Tester",
+          value: tester,
+          inline: true
+        }
       );
 
     await interaction.reply({
@@ -167,7 +219,8 @@ client.on("interactionCreate", async interaction => {
 
   // 🔵 PROFILE
   if (interaction.commandName === "profile") {
-    const player = interaction.options.getString("player");
+    const player =
+      interaction.options.getString("player");
 
     if (!playerData[player]) {
       return interaction.reply({
@@ -179,17 +232,14 @@ client.on("interactionCreate", async interaction => {
     let desc = "";
 
     for (const mode of gamemodes) {
-      const t = playerData[player]?.tiers[mode] || "EMPTY";
-      desc += `**${mode}:** ${t}\n`;
+      desc += `**${mode}:** ${
+        playerData[player].tiers[mode] || "EMPTY"
+      }\n`;
     }
 
     const embed = new EmbedBuilder()
       .setTitle(`${player} Profile`)
       .setColor("Blue")
-      .addFields({
-        name: "Region",
-        value: playerData[player].region || "Unknown"
-      })
       .setDescription(desc);
 
     await interaction.reply({
